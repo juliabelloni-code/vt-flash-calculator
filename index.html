@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora VT Flash — Quanto você está perdendo?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --pink: #E6007C;
+    --pink-light: #E6007C;
+    --pink-dim: rgba(230,0,124,0.12);
+    --bg: #0A0A0A;
+    --bg2: #111111;
+    --bg3: #1A1A1A;
+    --border: rgba(255,255,255,0.08);
+    --border-hover: rgba(255,255,255,0.16);
+    --text: #F5F5F0;
+    --text-muted: rgba(245,245,240,0.45);
+    --text-mid: rgba(245,245,240,0.7);
+    --green: #00E5A0;
+    --green-dim: rgba(0,229,160,0.12);
+    --pink-warn: rgba(230,0,124,0.15);
+    --radius: 12px;
+    --radius-lg: 20px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE TEXTURE ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+  }
+  .logo span { color: var(--pink); }
+
+  .badge-header {
+    background: var(--pink-dim);
+    border: 1px solid rgba(230,0,124,0.3);
+    color: var(--pink-light);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 14px;
+    border-radius: 100px;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    z-index: 10;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 80px 40px 60px;
+    text-align: center;
+  }
+
+  .hero-kicker {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--pink);
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(36px, 6vw, 62px);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 24px;
+    color: var(--text);
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--pink);
+  }
+
+  .hero-sub {
+    font-size: 17px;
+    color: var(--text-mid);
+    max-width: 520px;
+    margin: 0 auto 48px;
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  /* ── GLOW DECORATION ── */
+  .glow {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(230,0,124,0.15) 0%, transparent 70%);
+    pointer-events: none;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: -1;
+  }
+
+  /* ── CALCULATOR CARD ── */
+  .calc-card {
+    position: relative;
+    z-index: 10;
+    max-width: 780px;
+    margin: 0 auto 80px;
+    padding: 0 20px;
+  }
+
+  .card-inner {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .card-top {
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #FF5F57; }
+  .dot-y { background: #FFBD2E; }
+  .dot-g { background: #28CA41; }
+
+  .card-title-bar {
+    flex: 1;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
+
+  .card-body { padding: 36px 40px; }
+
+  /* ── SECTION LABEL ── */
+  .sec-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+
+  /* ── INPUT GRID ── */
+  .inputs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+
+  .input-block { display: flex; flex-direction: column; gap: 8px; }
+
+  .input-block label {
+    font-size: 13px;
+    color: var(--text-mid);
+    font-weight: 400;
+  }
+
+  .input-wrap {
+    display: flex;
+    align-items: center;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .input-wrap:focus-within {
+    border-color: var(--pink);
+    box-shadow: 0 0 0 3px rgba(230,0,124,0.1);
+  }
+
+  .input-prefix, .input-suffix {
+    padding: 0 14px;
+    font-size: 14px;
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.03);
+    height: 46px;
+    display: flex;
+    align-items: center;
+    border-right: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .input-suffix { border-right: none; border-left: 1px solid var(--border); }
+
+  input[type="number"] {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 0 14px;
+    height: 46px;
+    width: 100%;
+    -moz-appearance: textfield;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  /* ── DIVIDER ── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0 0 32px;
+  }
+
+  /* ── RESULTS ── */
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .metric {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    transition: border-color 0.3s;
+  }
+
+  .metric-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .metric-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .metric-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .metric.highlight {
+    background: var(--green-dim);
+    border-color: rgba(0,229,160,0.25);
+  }
+
+  .metric.highlight .metric-value { color: var(--green); }
+
+  .metric.highlight-year {
+    background: rgba(0,229,160,0.06);
+    border-color: rgba(0,229,160,0.15);
+  }
+
+  .metric.highlight-year .metric-value { color: var(--green); }
+
+  /* ── VERDICT ── */
+  .verdict {
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    border: 1px solid var(--border);
+    margin-bottom: 28px;
+    transition: all 0.4s;
+  }
+
+  .verdict.good {
+    background: var(--green-dim);
+    border-color: rgba(0,229,160,0.25);
+  }
+
+  .verdict.bad {
+    background: var(--pink-warn);
+    border-color: rgba(230,0,124,0.25);
+  }
+
+  .verdict-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .verdict.good .verdict-title { color: var(--green); }
+  .verdict.bad .verdict-title { color: var(--pink-light); }
+
+  .verdict-body {
+    font-size: 14px;
+    color: var(--text-mid);
+    line-height: 1.6;
+  }
+
+  /* ── BREAKDOWN ── */
+  details {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  summary {
+    padding: 14px 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-mid);
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+    background: var(--bg3);
+    transition: background 0.2s;
+  }
+
+  summary:hover { background: rgba(255,255,255,0.04); }
+  summary::-webkit-details-marker { display: none; }
+
+  .summary-arrow {
+    font-size: 12px;
+    color: var(--text-muted);
+    transition: transform 0.2s;
+  }
+
+  details[open] .summary-arrow { transform: rotate(180deg); }
+
+  .breakdown-body { padding: 4px 20px 16px; }
+
+  .bd-section {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 16px 0 8px;
+  }
+
+  .bd-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    color: var(--text-mid);
+  }
+
+  .bd-row:last-child { border-bottom: none; font-weight: 500; color: var(--text); }
+
+  .val-neg { color: #FF6B6B; }
+  .val-pos { color: var(--green); }
+
+  /* ── FOOTNOTE ── */
+  .footnote {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 32px 40px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  footer strong { color: var(--pink); font-weight: 600; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero { animation: fadeUp 0.6s ease both; }
+  .calc-card { animation: fadeUp 0.6s ease 0.15s both; }
+
+
+  /* ── OTIMIZAÇÃO DE SALDO ── */
+  .otimizacao-block {
+    background: var(--bg3);
+    border: 1px solid rgba(230,0,124,0.2);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 28px;
+  }
+
+  .otim-header {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+
+  .otim-icon {
+    font-size: 22px;
+    line-height: 1;
+    margin-top: 2px;
+  }
+
+  .otim-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--pink);
+    margin-bottom: 5px;
+  }
+
+  .otim-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .otim-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  .otim-metric {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+  }
+
+  .otim-metric.otim-highlight {
+    background: var(--green-dim);
+    border-color: rgba(0,229,160,0.25);
+  }
+
+  .otim-metric.otim-highlight .otim-metric-value { color: var(--green); }
+
+  .otim-metric-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 7px;
+    line-height: 1.4;
+  }
+
+  .otim-metric-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .otim-metric-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* ── TOTAL BLOCK ── */
+  .total-block {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+
+  .total-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    color: var(--text-mid);
+  }
+
+  .total-item:last-child { border-bottom: none; }
+
+  .total-item.total-final {
+    background: rgba(0,229,160,0.06);
+    font-weight: 500;
+    color: var(--text);
+    font-size: 15px;
+  }
+
+  .total-label { color: inherit; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    header { padding: 16px 20px; }
+    .hero { padding: 52px 20px 40px; }
+    h1 { font-size: 32px; }
+    .card-body { padding: 24px 20px; }
+    .inputs-grid { grid-template-columns: 1fr; }
+    .results-grid { grid-template-columns: 1fr 1fr; }
+    .otim-metrics { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 420px) {
+    .results-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="glow"></div>
+
+<header>
+  <div class="logo">VT<span>Flash</span> · Calculadora</div>
+  <div class="badge-header">Benefícios Corporativos</div>
+</header>
+
+<section class="hero">
+  <p class="hero-kicker">Vale Transporte · Flash vs. Concorrentes</p>
+  <h1>Quanto sua empresa está <em>perdendo</em> com o VT atual?</h1>
+  <p class="hero-sub">Insira os dados do seu contrato atual e veja em segundos o custo real das taxas pagas — e o quanto a Flash pode economizar.</p>
+</section>
+
+<div class="calc-card">
+  <div class="card-inner">
+    <div class="card-top">
+      <div class="dot dot-r"></div>
+      <div class="dot dot-y"></div>
+      <div class="dot dot-g"></div>
+    </div>
+    <div class="card-body">
+
+      <p class="sec-label">Parâmetros do cenário</p>
+
+      <div class="inputs-grid">
+        <div class="input-block">
+          <label>Montante transacionado / mês</label>
+          <div class="input-wrap">
+            <span class="input-prefix">R$</span>
+            <input type="number" id="montante" value="100000" min="0" step="1000" oninput="calc()">
+          </div>
+        </div>
+        <div class="input-block">
+          <label>Taxa cobrada pelo concorrente</label>
+          <div class="input-wrap">
+            <input type="number" id="taxa" value="4" min="0" max="20" step="0.1" oninput="calc()">
+            <span class="input-suffix">%</span>
+          </div>
+        </div>
+        <div class="input-block">
+          <label>Cashback Flash oferecido</label>
+          <div class="input-wrap">
+            <input type="number" id="cashback" value="1.5" min="0" max="10" step="0.1" oninput="calc()">
+            <span class="input-suffix">%</span>
+          </div>
+        </div>
+        <div class="input-block">
+          <label>Prazo de pagamento ao concorrente</label>
+          <div class="input-wrap">
+            <input type="number" id="prazo" value="30" min="1" max="30" step="1" oninput="calc()">
+            <span class="input-suffix">dias</span>
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider">
+      <p class="sec-label">Resultado comparativo</p>
+
+      <div class="results-grid">
+        <div class="metric" id="m-concorrente">
+          <div class="metric-label">Custo com concorrente</div>
+          <div class="metric-value" id="v-concorrente">—</div>
+          <div class="metric-sub">taxa líquida real</div>
+        </div>
+        <div class="metric" id="m-flash">
+          <div class="metric-label">Retorno com Flash</div>
+          <div class="metric-value" id="v-flash">—</div>
+          <div class="metric-sub">cashback direto</div>
+        </div>
+        <div class="metric" id="m-economia">
+          <div class="metric-label">Economia mensal</div>
+          <div class="metric-value" id="v-economia">—</div>
+          <div class="metric-sub">Flash vs concorrente</div>
+        </div>
+        <div class="metric" id="m-anual">
+          <div class="metric-label">Economia anual</div>
+          <div class="metric-value" id="v-anual">—</div>
+          <div class="metric-sub">projeção 12 meses</div>
+        </div>
+      </div>
+
+      <!-- OTIMIZAÇÃO DE SALDO -->
+      <div class="otimizacao-block">
+        <div class="otim-header">
+          <div class="otim-icon">⚡</div>
+          <div>
+            <div class="otim-title">Otimização de saldo Flash</div>
+            <div class="otim-desc">50% dos colaboradores deixam 25% de saldo remanescente. A Flash calcula automaticamente o depósito ideal no mês seguinte, cobrando 20% sobre a economia gerada — o restante fica com a empresa.</div>
+          </div>
+        </div>
+        <div class="otim-metrics">
+          <div class="otim-metric">
+            <div class="otim-metric-label">Economia bruta gerada</div>
+            <div class="otim-metric-value val-pos" id="v-otim-bruta">—</div>
+            <div class="otim-metric-sub">saldo não recarregado</div>
+          </div>
+          <div class="otim-metric">
+            <div class="otim-metric-label">Fee Flash (20%)</div>
+            <div class="otim-metric-value val-neg" id="v-otim-fee">—</div>
+            <div class="otim-metric-sub">cobrado sobre a economia</div>
+          </div>
+          <div class="otim-metric otim-highlight">
+            <div class="otim-metric-label">Ganho líquido / mês</div>
+            <div class="otim-metric-value" id="v-otim-liq">—</div>
+            <div class="otim-metric-sub">fica com a empresa</div>
+          </div>
+          <div class="otim-metric otim-highlight">
+            <div class="otim-metric-label">Ganho líquido / ano</div>
+            <div class="otim-metric-value" id="v-otim-anual">—</div>
+            <div class="otim-metric-sub">projeção 12 meses</div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider">
+      <p class="sec-label" style="margin-bottom:12px;">Economia total com Flash</p>
+      <div class="total-block">
+        <div class="total-item">
+          <span class="total-label">Economia VT (taxa + cashback)</span>
+          <span class="val-pos" id="v-total-vt">—</span>
+        </div>
+        <div class="total-item">
+          <span class="total-label">Ganho otimização de saldo</span>
+          <span class="val-pos" id="v-total-otim">—</span>
+        </div>
+        <div class="total-item total-final">
+          <span class="total-label">Total mensal</span>
+          <span class="val-pos" id="v-total-mes">—</span>
+        </div>
+        <div class="total-item total-final">
+          <span class="total-label">Total anual</span>
+          <span class="val-pos" id="v-total-ano">—</span>
+        </div>
+      </div>
+
+      <div class="verdict" id="verdict">
+        <div class="verdict-title" id="verdict-title"></div>
+        <div class="verdict-body" id="verdict-body"></div>
+      </div>
+
+      <details>
+        <summary>
+          Ver detalhamento completo
+          <span class="summary-arrow">▼</span>
+        </summary>
+        <div class="breakdown-body">
+          <div class="bd-section">Concorrente — custo real</div>
+          <div class="bd-row">
+            <span>Taxa sobre montante (<span id="bd-taxa">—</span>%)</span>
+            <span class="val-neg" id="bd-v-taxa">—</span>
+          </div>
+          <div class="bd-row">
+            <span>Rendimento do float (Selic, <span id="bd-dias">30</span> dias)</span>
+            <span class="val-pos" id="bd-v-rend">—</span>
+          </div>
+          <div class="bd-row">
+            <span>IR + IOF sobre rendimento (~22,5% + 0,5%)</span>
+            <span class="val-neg" id="bd-v-imp">—</span>
+          </div>
+          <div class="bd-row">
+            <span>Custo líquido total</span>
+            <span class="val-neg" id="bd-v-liq">—</span>
+          </div>
+          <div class="bd-section">Flash — custo real</div>
+          <div class="bd-row">
+            <span>Taxa Flash</span>
+            <span>R$ 0,00</span>
+          </div>
+          <div class="bd-row">
+            <span>Cashback (<span id="bd-cb">—</span>%)</span>
+            <span class="val-pos" id="bd-v-cb">—</span>
+          </div>
+          <div class="bd-row">
+            <span>Custo / retorno líquido Flash</span>
+            <span class="val-pos" id="bd-v-flash-liq">—</span>
+          </div>
+          <div class="bd-section">Otimização de saldo — premissas</div>
+          <div class="bd-row">
+            <span>Colaboradores com saldo remanescente</span>
+            <span>50% do total</span>
+          </div>
+          <div class="bd-row">
+            <span>Saldo médio remanescente</span>
+            <span>25% do depósito</span>
+          </div>
+          <div class="bd-row">
+            <span>Economia bruta identificada</span>
+            <span class="val-pos" id="bd-v-otim-bruta">—</span>
+          </div>
+          <div class="bd-row">
+            <span>Fee Flash sobre a economia (20%)</span>
+            <span class="val-neg" id="bd-v-otim-fee">—</span>
+          </div>
+          <div class="bd-row">
+            <span>Ganho líquido para a empresa</span>
+            <span class="val-pos" id="bd-v-otim-liq">—</span>
+          </div>
+        </div>
+      </details>
+
+      <p class="footnote">
+        * Rendimento do float calculado com base na Selic atual (~10,5% a.a.), proporcional ao prazo informado. IR de 22,5% aplicado sobre o rendimento bruto (regime de curto prazo, ≤ 180 dias) + IOF médio de 0,5%. O imposto incide sobre o rendimento, não sobre o principal. Cálculo para fins ilustrativos — resultados reais dependem das condições específicas de cada empresa.
+      </p>
+
+    </div>
+  </div>
+</div>
+
+<footer>
+  Desenvolvido para o time comercial <strong>Flash Benefícios</strong> · Uso interno
+</footer>
+
+<script>
+const SELIC = 0.105;
+const IR = 0.225;
+const IOF = 0.005;
+
+function brl(v) {
+  const abs = Math.abs(v);
+  const s = abs.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return (v < 0 ? '- R$ ' : 'R$ ') + s;
+}
+
+function calc() {
+  const M  = parseFloat(document.getElementById('montante').value) || 0;
+  const T  = parseFloat(document.getElementById('taxa').value) || 0;
+  const CB = parseFloat(document.getElementById('cashback').value) || 0;
+  const D  = parseFloat(document.getElementById('prazo').value) || 30;
+
+  const taxa       = M * (T / 100);
+  const selicP     = Math.pow(1 + SELIC, D / 365) - 1;
+  const rendBruto  = M * selicP;
+  const imposto    = rendBruto * (IR + IOF);
+  const rendLiq    = rendBruto - imposto;
+  const custoConcorrente = taxa - rendLiq;
+  const valorCb    = M * (CB / 100);
+  const economia   = custoConcorrente + valorCb;
+  const anual      = economia * 12;
+
+  // Otimização de saldo
+  // 50% dos colaboradores com 25% de saldo remanescente
+  const otimBruta  = M * 0.50 * 0.25;
+  const otimFee    = otimBruta * 0.20;
+  const otimLiq    = otimBruta - otimFee;
+  const otimAnual  = otimLiq * 12;
+
+  // Total combinado
+  const totalMes   = economia + otimLiq;
+  const totalAno   = totalMes * 12;
+
+  document.getElementById('v-concorrente').textContent = brl(custoConcorrente);
+  document.getElementById('v-flash').textContent = '+ ' + brl(valorCb);
+  document.getElementById('v-economia').textContent = brl(economia);
+  document.getElementById('v-anual').textContent = brl(anual);
+
+  const mE = document.getElementById('m-economia');
+  const mA = document.getElementById('m-anual');
+  mE.className = 'metric ' + (economia > 0 ? 'highlight' : '');
+  mA.className = 'metric ' + (economia > 0 ? 'highlight-year' : '');
+
+  document.getElementById('bd-taxa').textContent = T.toFixed(1);
+  document.getElementById('bd-dias').textContent = D;
+  document.getElementById('bd-cb').textContent  = CB.toFixed(1);
+  document.getElementById('bd-v-taxa').textContent  = '- ' + brl(taxa);
+  document.getElementById('bd-v-rend').textContent  = '+ ' + brl(rendLiq);
+  document.getElementById('bd-v-imp').textContent   = '- ' + brl(imposto);
+  document.getElementById('bd-v-liq').textContent   = brl(custoConcorrente);
+  document.getElementById('bd-v-cb').textContent    = '+ ' + brl(valorCb);
+  document.getElementById('bd-v-flash-liq').textContent = '+ ' + brl(valorCb);
+
+  // Otimização UI
+  document.getElementById('v-otim-bruta').textContent   = '+ ' + brl(otimBruta);
+  document.getElementById('v-otim-fee').textContent     = '- ' + brl(otimFee);
+  document.getElementById('v-otim-liq').textContent     = '+ ' + brl(otimLiq);
+  document.getElementById('v-otim-anual').textContent   = '+ ' + brl(otimAnual);
+  document.getElementById('bd-v-otim-bruta').textContent = '+ ' + brl(otimBruta);
+  document.getElementById('bd-v-otim-fee').textContent   = '- ' + brl(otimFee);
+  document.getElementById('bd-v-otim-liq').textContent   = '+ ' + brl(otimLiq);
+
+  // Total
+  document.getElementById('v-total-vt').textContent    = '+ ' + brl(economia);
+  document.getElementById('v-total-otim').textContent  = '+ ' + brl(otimLiq);
+  document.getElementById('v-total-mes').textContent   = '+ ' + brl(totalMes);
+  document.getElementById('v-total-ano').textContent   = '+ ' + brl(totalAno);
+
+  const v = document.getElementById('verdict');
+  const vt = document.getElementById('verdict-title');
+  const vb = document.getElementById('verdict-body');
+
+  if (totalMes > 0) {
+    v.className = 'verdict good';
+    vt.textContent = '✓ Flash é a melhor opção para esta empresa';
+    vb.textContent = `Entre a economia na taxa, o cashback e o ganho da otimização de saldo, a empresa economiza ${brl(totalMes)} por mês — ou ${brl(totalAno)} por ano migrando para o VT Flash. Sem taxa sobre o depósito, sem gestão manual de float e com otimização automática do saldo remanescente.`;
+  } else {
+    v.className = 'verdict bad';
+    vt.textContent = '⚠ Atenção: revise os parâmetros';
+    vb.textContent = `Com esta taxa e este prazo, o float pode se aproximar do custo da taxa. Revise o cashback oferecido ou explore outros diferenciais da Flash: simplicidade operacional, otimização de saldo e conformidade regulatória.`;
+  }
+}
+
+calc();
+</script>
+</body>
+</html>
